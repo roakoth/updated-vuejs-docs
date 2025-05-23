@@ -7,7 +7,7 @@ import mdx from '@astrojs/mdx';
 // https://astro.build/config
 export default defineConfig({
     site: 'https://roakoth.github.io',
-    base: '/VueJS-docs/vue-docs',
+    base: '/updated-vuejs-docs',
     integrations: [starlight({
         title: 'Vue.js',
         social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
