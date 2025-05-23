@@ -16,7 +16,7 @@ export default defineConfig({
                 label: 'Getting Started',
                 items: [
                     // Each item here is one entry in the navigation menu.
-                    { label: 'Introduction', slug: 'updated-vuejs-docs/guide/introduction' },
+                    { label: 'Introduction', slug: 'guide/introduction' },
                     { label: 'Installation', slug: 'guide/installation' },
                     { label: 'Creating a Vue Application', slug: 'guide/application' },
                 ],
