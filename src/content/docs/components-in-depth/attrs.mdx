@@ -1,0 +1,194 @@
+---
+title: Fallthrough Attributes
+description: A guide for Fallthrough Attributes
+---
+import { Aside } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
+import { Code } from '@astrojs/starlight/components';
+
+> This page assumes you've already read the [Components Basics](https://vuejs.org/guide/essentials/component-basics.html). 
+Read that first if you are new to components.
+
+## Attribute Inheritance
+
+A "fallthrough attribute" is an attribute or `v-on` event listener that is passed to a component, 
+but is not explicitly declared in the receiving component's [props](https://vuejs.org/guide/components/props.html) or [emits](https://vuejs.org/guide/components/events.html#declaring-emitted-events). 
+Common examples of this include `class`, `style`, and `id` attributes.
+
+When a component renders a single root element, fallthrough attributes will be automatically added to the root element's attributes. 
+For example, given a `<MyButton>` component with the following template:
+
+export const template1 = `
+<!-- template of <MyButton> -->
+<button>Click Me</button>
+`;
+
+<Code code={template1} lang="vue" />
+
+And a parent using this component with:
+
+export const template2 = `
+<MyButton class="large" />
+`;
+
+<Code code={template2} lang="vue" />
+
+The final rendered DOM would be:
+
+export const template3 = `
+<button class="large">Click Me</button>
+`;
+
+<Code code={template3} lang="vue" />
+
+Here, `<MyButton>` did not declare `class` as an accepted prop. 
+Therefore, `class` is treated as a fallthrough attribute and automatically added to `<MyButton>`'s root element.
+
+### `class` and `style` Merging
+If the child component's root element already has existing `class` or `style` attributes, 
+it will be merged with the `class` and `style` values that are inherited from the parent. 
+Suppose we change the template of `<MyButton>` in the previous example to:
+
+export const template4 = `
+<!-- template of <MyButton> -->
+<button class="btn">Click Me</button>
+`;
+
+<Code code={template4} lang="vue" />
+
+Then the final rendered DOM would now become:
+
+
+export const template5 = `
+<button class="btn large">Click Me</button>
+`;
+
+<Code code={template5} lang="vue" />
+
+### `v-on` Listener Inheritance
+
+The same rule applies to `v-on` event listeners:
+
+export const template6 = `
+<MyButton @click="onClick" />
+`;
+
+<Code code={template6} lang="vue" />
+
+The `click` listener will be added to the root element of `<MyButton>`, 
+i.e. the native `<button>` element. When the native `<button>` is clicked, 
+it will trigger the `onClick` method of the parent component. 
+If the native `<button>` already has a `click` listener bound with `v-on`, then both listeners will trigger.
+
+### Nested Component Inheritance
+
+If a component renders another component as its root node, 
+for example, we refactored `<MyButton>` to render a `<BaseButton>` as its root:
+
+export const template7 = `
+<!-- template of <MyButton/> that simply renders another component -->
+<BaseButton />
+`;
+
+<Code code={template7} lang="vue" />
+
+Then the fallthrough attributes received by `<MyButton>` will be automatically forwarded to `<BaseButton>`.
+
+Note that:
+
+1. Forwarded attributes do not include any attributes that are declared as props, 
+or `v-on` listeners of declared events by `<MyButton>` - in other words, the declared props and listeners have been "consumed" by `<MyButton>`.
+
+2. Forwarded attributes may be accepted as props by `<BaseButton>`, if declared by it.
+
+## Disabling Attribute Inheritance
+
+If you do not want a component to automatically inherit attributes, you can set `inheritAttrs: 
+false` in the component's options.
+
+The common scenario for disabling attribute inheritance is when attributes need to be applied to other elements besides the root node. 
+By setting the `inheritAttrs` option to `false`, you can take full control over where the fallthrough attributes should be applied.
+
+These fallthrough attributes can be accessed directly in template expressions as `$attrs`:
+
+export const template8 = `
+<span>Fallthrough attributes: {{ $attrs }}</span>
+`;
+
+<Code code={template8} lang="vue" />
+
+The `$attrs` object includes all attributes that are not declared by the component's `props` or `emits` options (e.g., `class`, `style`, `v-on` listeners, etc.).
+
+Some notes:
+
+- Unlike props, fallthrough attributes preserve their original casing in JavaScript, so an attribute like `foo-bar` needs to be accessed as `$attrs['foo-bar']`.
+
+A `v-on` event listener like `@click` will be exposed on the object as a function under `$attrs.onClick`.
+
+Using our `<MyButton>` component example from the [previous section](https://vuejs.org/guide/components/attrs.html#attribute-inheritance) - sometimes we may need to wrap the actual `<button>` element with an extra `<div>` for styling purposes:
+
+```js
+<div class="btn-wrapper">
+  <button class="btn">Click Me</button>
+</div>
+```
+We want all fallthrough attributes like `class` and `v-on` listeners to be applied to the inner `<button>`, not the outer `<div>`. 
+We can achieve this with `inheritAttrs: false` and `v-bind="$attrs"`:
+
+export const template9 = `
+<div class="btn-wrapper">
+  <button class="btn" v-bind="$attrs">Click Me</button>
+</div>
+`;
+
+<Code code={template9} lang="vue" />
+
+Remember that `v-bind` [without an argument](https://vuejs.org/guide/essentials/template-syntax.html#dynamically-binding-multiple-attributes) binds all the properties of an object as attributes of the target element.
+
+## Attribute Inheritance on Multiple Root Nodes
+
+Unlike components with a single root node, components with multiple root nodes do not have an automatic attribute fallthrough behavior. 
+If `$attrs` are not bound explicitly, a runtime warning will be issued.
+
+export const template10 = `
+<div class="btn-wrapper">
+  <CustomLayout id="custom-layout" @click="changeValue" />
+</div>
+`;
+
+<Code code={template10} lang="vue" />
+
+If `<CustomLayout>` has the following multi-root template, 
+there will be a warning because Vue cannot be sure where to apply the fallthrough attributes:
+
+export const template11 = `
+<header>...</header>
+<main>...</main>
+<footer>...</footer>
+`;
+
+<Code code={template11} lang="vue" />
+
+The warning will be suppressed if `$attrs` is explicitly bound:
+
+export const template12 = `
+<header>...</header>
+<main v-bind="$attrs">...</main>
+<footer>...</footer>
+`;
+
+<Code code={template12} lang="vue" />
+
+## Accessing Fallthrough Attributes in JavaScript
+
+If needed, you can access a component's fallthrough attributes via the `$attrs` instance property:
+
+```js
+export default {
+  created() {
+    console.log(this.$attrs)
+  }
+}
+```
+[Edit this page on GitHub](https://github.com/vuejs/docs/edit/main/src/guide/components/attrs.md)
+

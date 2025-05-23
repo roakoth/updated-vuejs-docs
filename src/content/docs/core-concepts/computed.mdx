@@ -1,0 +1,238 @@
+---
+title: Computed Properties
+description: An essential page for computed properties
+---
+
+import { Code } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+import { Badge } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
+
+<LinkCard title="Watch a free video lesson on Vue School" href="https://vueschool.io/lessons/computed-properties-in-vue-3?friend=vuejs" />
+
+## Basic example
+In-template expressions are very convenient, but they are meant for simple operations. 
+Putting too much logic in your templates can make them bloated and hard to maintain. 
+For example, if we have an object with a nested array:
+
+```js
+export default {
+  data() {
+    return {
+      author: {
+        name: 'John Doe',
+        books: [
+          'Vue 2 - Advanced Guide',
+          'Vue 3 - Basic Guide',
+          'Vue 4 - The Mystery'
+        ]
+      }
+    }
+  }
+}
+```
+And we want to display different messages depending on if author already has some books or not:
+
+export const template1 = `
+<p>Has published books:</p>
+<span>{{ author.books.length > 0 ? 'Yes' : 'No' }}</span>
+`;
+
+<Code code={template1} lang="vue" />
+
+At this point, the template is getting a bit cluttered. 
+We have to look at it for a second before realizing that it performs a calculation depending on `author.books`. 
+More importantly, we probably don't want to repeat ourselves if we need to include this calculation in the template more than once.
+
+That's why for complex logic that includes reactive data, it is recommended to use a **computed property**. 
+Here's the same example, refactored:
+
+```js
+export default {
+  data() {
+    return {
+      author: {
+        name: 'John Doe',
+        books: [
+          'Vue 2 - Advanced Guide',
+          'Vue 3 - Basic Guide',
+          'Vue 4 - The Mystery'
+        ]
+      }
+    }
+  },
+  computed: {
+    // a computed getter
+    publishedBooksMessage() {
+      // `this` points to the component instance
+      return this.author.books.length > 0 ? 'Yes' : 'No'
+    }
+  }
+}
+
+```
+export const template2 = `
+<p>Has published books:</p>
+<span>{{ publishedBooksMessage }}</span>
+`;
+
+<Code code={template2} lang="vue" />
+
+[Try it in the Playground](https://play.vuejs.org/#eNqFU9tq3DAQ/ZVBL24hdUqTp2XZkm1D20DS0oZCqfugWBNbiSwJzWi7YfG/R76snUAuYPBozhnPmaPxTpx4n28iioVYUhm051VhcetdYFB4LaNh2BUWQEmWb94OMUBAjsHuTwAycu3CYk4AWNngArIzV1v47DA7mKEr525pAX/nDED2OyJ8gHdwojbSlqjgS9TqUdlIOkqktSRdPss4TozLGuH8jhjDXTYT/u3Ddgj6V9t/oXSNj4xqGsLHK6OpRrXu5J4jkaxwtmAygWtN+WBA3k+WG7QV17CC9/ARsj9IGSQnLtwoZGha2PQsDyfT04Gx8UYyphPA0q++SppVjK4tD/0Ak5d2tduN1r/WGdo29epKuqZTI3EgmEpnr3WV35CzaQ368QrR2aENhu+etbNUiMmXQkhj3P+zPsch4ngBqabG8vaJ/A1tu1whfgQkDBssxISxDBXyAJ/+usBtiiewcSqaxH4B/InkTOw0DrR1tCrJfsDr1X5rupXWtrqk0y2jpf1QndB5CQqR/oVPL4w+yz3Kj/f3KNp7jvsFGA==)
+
+Here we have declared a computed property `publishedBooksMessage`.
+
+Try to change the value of the `books` array in the application `data` and you will see how `publishedBooksMessage` is changing accordingly.
+
+You can data-bind to computed properties in templates just like a normal property. Vue is aware that `this.publishedBooksMessage` depends on `this.author.books`, 
+so it will update any bindings that depend on `this.publishedBooksMessage` when `this.author.books` changes.
+
+See also [Typing Computed Properties](https://vuejs.org/guide/typescript/options-api.html#typing-computed-properties) <Badge text="TS" variant="note" />
+
+## Computed Caching vs. Methods
+
+You may have noticed we can achieve the same result by invoking a method in the expression:
+
+export const template3 = `
+<p>{{ calculateBooksMessage() }}</p>
+`;
+
+<Code code={template3} lang="vue" />
+
+```
+// in component
+methods: {
+  calculateBooksMessage() {
+    return this.author.books.length > 0 ? 'Yes' : 'No'
+  }
+}
+```
+Instead of a computed property, we can define the same function as a method. 
+For the end result, the two approaches are indeed exactly the same. 
+However, the difference is that **computed properties are cached based on their reactive dependencies**. 
+A computed property will only re-evaluate when some of its reactive dependencies have changed. 
+This means as long as `author.books` has not changed, multiple access to `publishedBooksMessage` will immediately return the previously computed result without having to run the getter function again.
+
+This also means the following computed property will never update, 
+because `Date.now()` is not a reactive dependency:
+
+```js
+computed: {
+  now() {
+    return Date.now()
+  }
+}
+```
+In comparison, a method invocation will **always** run the function whenever a re-render happens.
+
+Why do we need caching? Imagine we have an expensive computed property `list`, 
+which requires looping through a huge array and doing a lot of computations. 
+Then we may have other computed properties that in turn depend on `list`. 
+Without caching, we would be executing `list`’s getter many more times than necessary! 
+In cases where you do not want caching, use a method call instead.
+
+## Writable Computed
+Computed properties are by default getter-only. 
+If you attempt to assign a new value to a computed property, 
+you will receive a runtime warning. In the rare cases where you need a "writable" computed property, 
+you can create one by providing both a getter and a setter:
+
+```js
+export default {
+  data() {
+    return {
+      firstName: 'John',
+      lastName: 'Doe'
+    }
+  },
+  computed: {
+    fullName: {
+      // getter
+      get() {
+        return this.firstName + ' ' + this.lastName
+      },
+      // setter
+      set(newValue) {
+        // Note: we are using destructuring assignment syntax here.
+        [this.firstName, this.lastName] = newValue.split(' ')
+      }
+    }
+  }
+}
+```
+
+Now when you run `this.fullName = 'John Doe'`, the setter will be invoked and `this.firstName` and `this.lastName` will be updated accordingly.
+
+## Getting the Previous Value
+- Only supported in 3.4+
+
+In case you need it, you can get the previous value returned by the computed property accessing the first argument of the getter:
+
+```js
+export default {
+  data() {
+    return {
+      count: 2
+    }
+  },
+  computed: {
+    // This computed will return the value of count when it's less or equal to 3.
+    // When count is >=4, the last value that fulfilled our condition will be returned
+    // instead until count is less or equal to 3
+    alwaysSmall(_, previous) {
+      if (this.count <= 3) {
+        return this.count
+      }
+
+      return previous
+    }
+  }
+}
+
+```
+
+In case you're using a writable computed:
+
+```js
+export default {
+  data() {
+    return {
+      count: 2
+    }
+  },
+  computed: {
+    alwaysSmall: {
+      get(previous) {
+        if (this.count <= 3) {
+          return this.count
+        }
+
+        return previous;
+      },
+      set(newValue) {
+        this.count = newValue * 2
+      }
+    }
+  }
+}
+```
+
+## Best Practices
+
+### Getters should be side-effect free
+
+It is important to remember that computed getter functions should only perform pure computation and be free of side effects. 
+For example, **don't mutate other state, make async requests, or mutate the DOM inside a computed getter!** 
+Think of a computed property as declaratively describing how to derive a value based on other values - 
+its only responsibility should be computing and returning that value. 
+Later in the guide we will discuss how we can perform side effects in reaction to state changes with [watchers](https://vuejs.org/guide/essentials/watchers.html)
+
+### Avoid mutating computed value
+
+The returned value from a computed property is derived state. 
+Think of it as a temporary snapshot - every time the source state changes, 
+a new snapshot is created. It does not make sense to mutate a snapshot, 
+so a computed return value should be treated as read-only and never be mutated - 
+instead, update the source state it depends on to trigger new computations.
+
+[Edit this page on GitHub](https://github.com/vuejs/docs/edit/main/src/guide/essentials/computed.md)

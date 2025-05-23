@@ -1,0 +1,31 @@
+---
+title: Custom Directives
+description: An essential page for custom directives
+---
+
+import { Code } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+## Introduction
+
+In addition to the default set of directives shipped in core (like `v-model` or `v-show`), Vue also allows you to register your own custom directives.
+
+We have introduced two forms of code reuse in Vue: [components](https://vuejs.org/guide/essentials/component-basics.html) and [composables](https://vuejs.org/guide/reusability/composables.html). Components are the main building blocks, while composables are focused on reusing stateful logic. 
+Custom directives, on the other hand, are mainly intended for reusing logic that involves low-level DOM access on plain elements.
+
+A custom directive is defined as an object containing lifecycle hooks similar to those of a component. 
+The hooks receive the element the directive is bound to. 
+Here is an example of a directive that adds a class to an element when it is inserted into the DOM by Vue:
+
+```js
+const highlight = {
+  mounted: (el) => el.classList.add('is-highlight')
+}
+
+export default {
+  directives: {
+    // enables v-highlight in template
+    highlight
+  }
+}
+```

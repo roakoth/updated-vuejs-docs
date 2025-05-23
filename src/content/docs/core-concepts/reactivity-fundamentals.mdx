@@ -1,0 +1,215 @@
+---
+title: Reactivity Fundamentals
+description: An essential page for reactivity fundamentals
+---
+
+import { Code } from '@astrojs/starlight/components';
+import { Aside } from '@astrojs/starlight/components';
+
+<Aside title="API Preference">
+
+This page and many other chapters later in the guide contain different content for the Options API and the Composition API. 
+Your current preference is **Options API**. 
+You can toggle between the API styles using the "API Preference" switches at the top of the left sidebar.
+
+</Aside>
+
+## Declaring Reactive State
+
+With the Options API, we use the `data` option to declare reactive state of a component. 
+The option value should be a function that returns an object. 
+Vue will call the function when creating a new component instance, and wrap the returned object in its reactivity system. 
+Any top-level properties of this object are proxied on the component instance (`this` in methods and lifecycle hooks):
+
+```js {2-6}
+export default {
+  data() {
+    return {
+      count: 1
+    }
+  },
+
+  // `mounted` is a lifecycle hook which we will explain later
+  mounted() {
+    // `this` refers to the component instance.
+    console.log(this.count) // => 1
+
+    // data can be mutated as well
+    this.count = 2
+  }
+}
+
+```
+[Try it in the Playground](https://play.vuejs.org/#eNp9Us1OMzEMfBUrJ5DQVt/PqQIkQBzgAAg45tCQdbuBrLNKHFpU9d1xNnTLASFFSmzPODNOtupiGJr3jGquTpONbuBzTbgZQmRocWmyZ9hqAmgNm6PjegaIyDnSPgKwIRPP4U+Nd2XbnWgq+2wGi76UsV2AS2DAuyXaD+sRuhDeYN0528EaYe28B7nbG0fgDWMs/C/u4e7SkDuXFqJiiTEBB+AORUM/BEJicJTYkMWmEmygFDw2PqyOCrEZ1R6XRmfnRfPUt5gEawheEPrMIqEFk0Sb9xVzoMMZ/B1tapJ1OpuGJwFjLyYYJQK4GtEuzWG7rXOC3ciYUOpEcRKRS7dqXlMgeYvRqlbFkvMY7wd2YkIraVKFaGW8D+vbMccxo0y75m2H9u2H/GvalJxWDxETxnfUaqqxiSvkWr5+usONnKdiH9rsBf1L8RFlwLlorLDLTK3I/oYb1d7IA0V2tHpO1xtGSntTRej+zxS0fMirX6wf5P5r/u8fQe0+Adpn7CE=)
+
+These instance properties are only added when the instance is first created, so you need to ensure they are all present in the object returned by the `data` function. 
+Where necessary, use `null`, `undefined` or some other placeholder value for properties where the desired value isn't yet available.
+
+It is possible to add a new property directly to `this` without including it in `data`. However, properties added this way will not be able to trigger reactive updates.
+
+Vue uses a `$` prefix when exposing its own built-in APIs via the component instance. 
+It also reserves the prefix `_` for internal properties. You should avoid using names for top-level `data` properties that start with either of these characters.
+
+### Reactive Proxy vs. Original
+In Vue 3, data is made reactive by leveraging [JavaScript Proxies](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy). 
+Users coming from Vue 2 should be aware of the following edge case:
+
+```js
+export default {
+  data() {
+    return {
+      someObject: {}
+    }
+  },
+  mounted() {
+    const newObject = {}
+    this.someObject = newObject
+
+    console.log(newObject === this.someObject) // false
+  }
+}
+
+```
+When you access `this.someObject` after assigning it, you will get a reactive proxy of the original `newObject`. 
+**Unlike in Vue 2, the original `newObject` is left intact and will not become reactive. 
+Therefore, always ensure that you access the reactive state as a property of `this`**
+
+## Declaring Methods
+[Watch a free video lesson on Vue School](https://vueschool.io/lessons/methods-in-vue-3?friend=vuejs)
+
+To add methods to a component instance we use the `methods` option. This should be an object containing the desired methods:
+
+```js {7-11}
+export default {
+  data() {
+    return {
+      count: 0
+    }
+  },
+  methods: {
+    increment() {
+      this.count++
+    }
+  },
+  mounted() {
+    // methods can be called in lifecycle hooks, or other methods!
+    this.increment()
+  }
+}
+
+```
+Vue automatically binds the `this` value for `methods` so that it always refers to the component instance. 
+This ensures that a method retains the correct `this` value if it's used as an event listener or callback. 
+You should avoid using arrow functions when defining `methods`, as that prevents Vue from binding the appropriate `this` value:
+
+```js
+export default {
+  methods: {
+    increment: () => {
+      // BAD: no `this` access here!
+    }
+  }
+}
+```
+Just like all other properties of the component instance, the `methods` are accessible from within the component's template. 
+Inside a template they are most commonly used as event listeners:
+
+export const template1 = `
+<button @click="increment">{{ count }}</button>
+`;
+
+<Code code={template1} lang="vue" />
+
+[Try it in the playground](https://play.vuejs.org/#eNp9Uk1rwzAM/SvCp42WdLCdSlb2QQ/bYRvbjr5kjtq6dexgy10g5L/PdkhSWCkY25KeHu9ZbtljXWdHj2zJciesrGnFNTa1sQQlbgqvCFquAcqCiqvr/g5gkbzVQwQgjNe0hJs+7uLRzeNeIe1M6ZYDVGphsUJNExcA7aTLEsVs9p8h5rGc8Al9wpOgXIeVL0YLISCsalUQhggg//FERsODUFIc7jkbCThbtW1vALouX/TA0JQvRgY2Z+SE0Ru5zfbO6PBaSQxnwlS1VGjfa5JGO85Gp5wVSpnf15Qj6zG5ST07FIcz+b1rYo6zD4sO7RE5G2tU2C0GrbG8/nrDJtzHYmVKrwL6QvETnVE+auxhT16XQfYJLql9qeLkpd5+u3VDqN1gKgqdZsJZ+DLPF6xPcm+zu2FArPsDd1nL4A==)
+
+In the example above, the method `increment` will be called when the `<button>` is clicked.
+
+### Deep reactivity
+In Vue, [state](https://vuejs.org/guide/scaling-up/state-management) is deeply reactive by default. 
+This means you can expect changes to be detected even when you mutate nested objects or arrays:
+
+```js
+export default {
+  data() {
+    return {
+      obj: {
+        nested: { count: 0 },
+        arr: ['foo', 'bar']
+      }
+    }
+  },
+  methods: {
+    mutateDeeply() {
+      // these will work as expected.
+      this.obj.nested.count++
+      this.obj.arr.push('baz')
+    }
+  }
+}
+```
+### DOM Update Timing
+
+When you mutate reactive state, the DOM is updated automatically. 
+However, it should be noted that the DOM updates are not applied synchronously. 
+Instead, Vue buffers them until the "next tick" in the update cycle to ensure that each component updates only once no matter how many state changes you have made.
+
+To wait for the DOM update to complete after a state change, you can use the [nextTick()](https://vuejs.org/api/general.html#nexttick) global API:
+
+```js
+import { nextTick } from 'vue'
+
+export default {
+  methods: {
+    async increment() {
+      this.count++
+      await nextTick()
+      // Now the DOM is updated
+    }
+  }
+}
+```
+
+### Stateful Methods
+In some cases, we may need to dynamically create a method function, for example creating a debounced event handler:
+
+```js
+import { debounce } from 'lodash-es'
+
+export default {
+  methods: {
+    // Debouncing with Lodash
+    click: debounce(function () {
+      // ... respond to click ...
+    }, 500)
+  }
+}
+```
+
+However, this approach is problematic for components that are reused because a debounced function is stateful: 
+it maintains some internal state on the elapsed time. 
+If multiple component instances share the same debounced function, they will interfere with one another.
+
+To keep each component instance's debounced function independent of the others, 
+we can create the debounced version in the `created` lifecycle hook:
+
+```js
+export default {
+  created() {
+    // each instance now has its own copy of debounced handler
+    this.debouncedClick = _.debounce(this.click, 500)
+  },
+  unmounted() {
+    // also a good idea to cancel the timer
+    // when the component is removed
+    this.debouncedClick.cancel()
+  },
+  methods: {
+    click() {
+      // ... respond to click ...
+    }
+  }
+}
+```
+[Edit this page on GitHub](https://github.com/vuejs/docs/edit/main/src/guide/essentials/reactivity-fundamentals.md)
+
+

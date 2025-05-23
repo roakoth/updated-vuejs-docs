@@ -1,0 +1,301 @@
+---
+title: Component v-model
+description: A guide for component v-model
+---
+import { Aside } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
+import { Code } from '@astrojs/starlight/components';
+
+## Basic Usage
+
+`v-model` can be used on a component to implement a two-way binding.
+
+First let's revisit how `v-model` is used on a native element:
+
+export const template1 = `
+<input v-model="searchText" />
+`;
+
+<Code code={template1} lang="vue" />
+
+Under the hood, the template compiler expands `v-model` to the more verbose equivalent for us. 
+So the above code does the same as the following:
+
+```js
+<input
+  :value="searchText"
+  @input="searchText = $event.target.value"
+/>
+```
+When used on a component, `v-model` instead expands to this:
+
+```js
+<CustomInput
+  :model-value="searchText"
+  @update:model-value="newValue => searchText = newValue"
+/>
+```
+For this to actually work though, the `<CustomInput>` component must do two things:
+
+- Bind the `value` attribute of a native `<input>` element to the `modelValue` prop
+- When a native input event is triggered, emit an update:modelValue custom event with the new value
+
+Here's that in action:
+
+```js
+<!-- CustomInput.vue -->
+<script>
+export default {
+  props: ['modelValue'],
+  emits: ['update:modelValue']
+}
+</script>
+
+<template>
+  <input
+    :value="modelValue"
+    @input="$emit('update:modelValue', $event.target.value)"
+  />
+</template>
+```
+Now `v-model` should work perfectly with this component:
+
+export const template2 = `
+<CustomInput v-model="searchText" />
+`;
+
+<Code code={template2} lang="vue" />
+
+[Try it in the Playground](https://play.vuejs.org/#eNqFkt9PwjAQx/+VS2MySHA86NOCRCU84IMaNb5QHxY4YNi1TX9MkoX/3WsncxiCybKtd9/efT+91uxO67TyyDI2sgtTaDfmsii1Mg4m3jpVzqT2DlZGlZCkw04sbEu45BJ3Ub7EVe6Fg5pLgIWiGhKlsxnUR5X2g5Bf5i7v9RstgEHnjTysAEq0Nl9jBskGhVDUJUT34UMvekbD1iwtHJZa5A5pBTDqNqsuS7VEccPZT0nOYDiGuj60gH2s1lZgA/YH8ehkTqFqozRRzpPY6j0XdCwfERLLIvDPE6+JF7Ou4F+MIhhowLMq7AkQbQHOmtRtlFHqIjTrneg0gAusaBCpy80aCSlE+83+IbU6hnd2oeSqWKdbqyShR0LOwjgLgeZJu0JJyxlNtTHAWU4T+nqIMWc8RvK4Z4OLzxPxrd2FGGfPBi2ailjaXOOxSU9fH3FH/22SoLwg9ZnkC1olfPDYyO69XJLtji66ncULXsj1m53uHEp7gApG4y2Les5o/pMz6L92r9Lrw+1k+28zSyGZ)
+
+Another way of implementing `v-model` within this component is to use a writable `computed` property with both a getter and a setter. 
+The `get` method should return the `modelValue` property and the `set` method should emit the corresponding event:
+
+```js
+<!-- CustomInput.vue -->
+<script>
+export default {
+  props: ['modelValue'],
+  emits: ['update:modelValue'],
+  computed: {
+    value: {
+      get() {
+        return this.modelValue
+      },
+      set(value) {
+        this.$emit('update:modelValue', value)
+      }
+    }
+  }
+}
+</script>
+
+<template>
+  <input v-model="value" />
+</template>
+```
+
+## `v-model` Arguments
+
+`v-model` on a component can also accept an argument:
+
+export const template3 = `
+<MyComponent v-model:title="bookTitle" />
+`;
+
+<Code code={template3} lang="vue" />
+
+In this case, instead of the default `modelValue` prop and `update:modelValue` event, 
+the child component should expect a `title` prop and emit an `update:title` event to update the parent value:
+
+```js
+<!-- MyComponent.vue -->
+<script>
+export default {
+  props: ['title'],
+  emits: ['update:title']
+}
+</script>
+
+<template>
+  <input
+    type="text"
+    :value="title"
+    @input="$emit('update:title', $event.target.value)"
+  />
+</template>
+```
+
+[Try it in the Playground](https://play.vuejs.org/#eNqFUttu2zAM/RVCKOAWyGIM25PhFbugDxuwC7a9VX0wEiZVJ0uCRHkuDP/7KGlJk14BwzbJQ/IckpP44NxyiCga0YaVV47OpVG9s57g6+0ny38GDcHG2x6qZX3gS2mVNNLgmOFr3HRRE0zSAKx2qNDAdFRpXqT4uqPu9KxgATxS9GZnAZAijQ1Uw6verlFD57exT8k4dr3TqW2CzenDL37aes+eDUJGdYRsAbTXr8+nqdSEeW5rtrP/kNX/Tk1GvZMif6WAmqFtva8nFuLeBI4G99gknLeOh3BZ5ZLVVZaPvUqTuayi40lgaVtdvShFGRepiKdbl4niSFIUVzN0Oh6wL973OYm9J6nr6XHLBZzgkKQQzxhZUapwVlIfaqewsmajtsubYA0rzwKlSMtWGv13R8qaIAXvvPSWotPa/v2SfeQjZvU55xpXfx7x34Qx+aT44TGgH1jGPlY4lvDFr29Z+T7I+4tJ9DPBnxisjoljgX2MZs20D3CZ7ed8/spsf4eLkdCEnahENJ9cxkvB60+38JT0O7pvlm93pyrmf+vMKho=)
+
+## Multiple `v-model` Bindings
+
+By leveraging the ability to target a particular prop and event as we learned before with `v-model` [arguments](https://vuejs.org/guide/components/v-model.html#v-model-arguments), 
+we can now create multiple v-model bindings on a single component instance.
+
+Each `v-model` will sync to a different prop, without the need for extra options in the component:
+
+export const template4 = `
+<UserName
+  v-model:first-name="first"
+  v-model:last-name="last"
+/>
+`;
+
+<Code code={template4} lang="vue" />
+
+```js
+<script>
+export default {
+  props: {
+    firstName: String,
+    lastName: String
+  },
+  emits: ['update:firstName', 'update:lastName']
+}
+</script>
+
+<template>
+  <input
+    type="text"
+    :value="firstName"
+    @input="$emit('update:firstName', $event.target.value)"
+  />
+  <input
+    type="text"
+    :value="lastName"
+    @input="$emit('update:lastName', $event.target.value)"
+  />
+</template>
+```
+
+[Try it in the Playground](https://play.vuejs.org/#eNqNU01v2zAM/SuCUMAtkNoYtpPhFfvqYT10w7qdph2MhEnc2ZIgUV4Gw/99pBQ7CRA0MwxbIh/JxydqkO+tzfsAspSVX7rG4p3STWeNQ/HDg3usOxBrZzqR5cVk4IBMaaVhF4ErWNehRTEoLcTSULQGjb4UwyHHuGDnqsb6+iYBhXCAwelpJ8S6cR5LkT2Yrc4inp+2jsZPhmuyYeQffeitipk0bRA629YItBOi2r66G4aUU4yjoDVnomVVkCtCJnYpb3/bmRW0ZQy51WR/q2TcKHmK4EQTgNfJX1DSqphJyIU8FuxE4XPCWWcsa0at4F4Lji3FE7pGb6IeCrncsZnRSVvoGtb8ZxYsyQypDYZmCzHZpujs10X5Gm0Dprbxr+VOEXazEmVft2HWJ2q497yLgeS5YkLX59hcQU/zkWPtNoB5zHRzkPD/a0/dXCg9N32p8unhoV8avW42+bM3mk4vHpKSPN9NC+6LxcZor2Q8Mi6vZN225s9DtKELsB9hitnC8vcZ+7PfsU3Jrw5oVHrqZPYljsl9//QY+5+dNIahJfQLzm/gTRuYY4J9CHpFtI9wke3neNdpkL77+x2C9lNTTDRetDR4kkb44wutH+i+zt9MF1SO/wCTG3ZS)
+
+## Handling `v-model` Modifiers
+When we were learning about form input bindings, we saw that `v-model` has [built-in modifiers](https://vuejs.org/guide/essentials/forms.html#modifiers) - `.trim`, `.number` and `.lazy`. 
+In some cases, you might also want the `v-model` on your custom input component to support custom modifiers.
+
+Let's create an example custom modifier, `capitalize`, that capitalizes the first letter of the string provided by the `v-model` binding:
+
+export const template5 = `
+<MyComponent v-model.capitalize="myText" />
+`;
+
+<Code code={template5} lang="vue" />
+
+Modifiers added to a component `v-model` will be provided to the component via the `modelModifiers` prop. In the below example, 
+we have created a component that contains a `modelModifiers` prop that defaults to an empty object:
+
+```js
+<script>
+export default {
+  props: {
+    modelValue: String,
+    modelModifiers: {
+      default: () => ({})
+    }
+  },
+  emits: ['update:modelValue'],
+  created() {
+    console.log(this.modelModifiers) // { capitalize: true }
+  }
+}
+</script>
+
+<template>
+  <input
+    type="text"
+    :value="modelValue"
+    @input="$emit('update:modelValue', $event.target.value)"
+  />
+</template>
+```
+
+Notice the component's `modelModifiers` prop contains `capitalize` and its value is `true` - due to it being set on the `v-model` binding `v-model.capitalize="myText"`.
+
+Now that we have our prop set up, we can check the `modelModifiers` object keys and write a handler to change the emitted value. 
+In the code below we will capitalize the string whenever the `<input />` element fires an `input` event.
+
+```js
+<script>
+export default {
+  props: {
+    modelValue: String,
+    modelModifiers: {
+      default: () => ({})
+    }
+  },
+  emits: ['update:modelValue'],
+  methods: {
+    emitValue(e) {
+      let value = e.target.value
+      if (this.modelModifiers.capitalize) {
+        value = value.charAt(0).toUpperCase() + value.slice(1)
+      }
+      this.$emit('update:modelValue', value)
+    }
+  }
+}
+</script>
+
+<template>
+  <input type="text" :value="modelValue" @input="emitValue" />
+</template>
+```
+[Try it in the Playground](https://play.vuejs.org/#eNqFVN+P0kAQ/lcmGxNKxKLRpwYunpd70OTUeOiL9aFpB9hzu7vZnSJI+N+d3UJbDHdHCGXn5/d9M9u9uLY23TQoMjHzpZOWrnIta2scwd3uxvA/jZpg6UwNo3Q6sIW0Ua4Bco3bmFDhsmgUwT5Yy1Ocz2B/VuswCf6qoCIZt7EADqlx+nQCqHcL3FIGo9gB4BAe/MPf2bQDygfC2qqCkE8Ai7X0ILVtCMrCSiqU/IsecINuR2upV7AzDTAGdFmInw1hbV7VpkKV9pnzXLQ4cgFTbjCbdt3ERPwnxZmClwSxztigRUso9vpRqAYzuCfH2KIqR8edqeRSouvjWbC2WAas2vwKkv1hPNQmpmMtg94/R41lfTHru4x+xYAaaW2qvmxIiP4Eu1kAKGQ5ghXmgCkVboXMMRhOEXIJCSvq03O4A/EG5aArFp9puS7cNSWvxymZ79aiuyk8MquXR79XssTkzZHekWD4xI4vAubkAsNJm36mynMbM2u3hXY2TJvaWWexTph+V5yt72MoWzvNLq4F+dLopVylD95oXoqoQi7CdZAK3RdL0mifi24EuSiUMn8+RRu5Bo+LwDlrLH9fsD/4bbDl4qtDj27DQDpfO6zWfXv/ORLqnMynURz9hPMbeqOagLEN+9DoimEP4iLaj/EVwVu78LdbQu1PpALQfh9zwTcjXJPHqPdw36bvThMTh39z14f6)
+
+### Modifiers for `v-model` with Arguments
+
+For `v-model` bindings with both argument and modifiers, the generated prop name will be `arg + "Modifiers"`. For example:
+
+export const template6 = `
+<MyComponent v-model:title.capitalize="myText">
+`;
+
+<Code code={template6} lang="vue" />
+
+The corresponding declarations should be:
+
+```js
+export default {
+  props: ['title', 'titleModifiers'],
+  emits: ['update:title'],
+  created() {
+    console.log(this.titleModifiers) // { capitalize: true }
+  }
+}
+```
+Here's another example of using modifiers with multiple `v-model` with different arguments:
+
+export const template7 = `
+<UserName
+  v-model:first-name.capitalize="first"
+  v-model:last-name.uppercase="last"
+/>
+`;
+
+<Code code={template7} lang="vue" />
+
+```js
+<script>
+export default {
+  props: {
+    firstName: String,
+    lastName: String,
+    firstNameModifiers: {
+      default: () => ({})
+    },
+    lastNameModifiers: {
+      default: () => ({})
+    }
+  },
+  emits: ['update:firstName', 'update:lastName'],
+  created() {
+    console.log(this.firstNameModifiers) // { capitalize: true }
+    console.log(this.lastNameModifiers) // { uppercase: true }
+  }
+}
+</script>
+```
+
+[Edit this page on GitHub](https://github.com/vuejs/docs/edit/main/src/guide/components/v-model.md)
