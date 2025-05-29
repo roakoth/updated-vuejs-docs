@@ -6,6 +6,7 @@ description: An essential page for class and style bindings
 import { Code } from '@astrojs/starlight/components';
 import { Aside } from '@astrojs/starlight/components';
 import { Badge } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
 
 A common need for data binding is manipulating an element's class list and inline styles. 
 Since `class` and `style` are both attributes, we can use `v-bind` to assign them a string value dynamically, 
@@ -14,7 +15,7 @@ For this reason, Vue provides special enhancements when `v-bind` is used with `c
 In addition to strings, the expressions can also evaluate to objects or arrays.
 
 ## Binding HTML Classes
-[Watch a free video lesson on Vue School](https://vueschool.io/lessons/dynamic-css-classes-with-vue-3?friend=vuejs)
+<LinkCard title="Watch a free video lesson on Vue School" href="https://vueschool.io/lessons/dynamic-css-classes-with-vue-3?friend=vuejs" />
 
 ### Binding to objects
 We can pass an object to `:class` (short for `v-bind:class`) to dynamically toggle classes:

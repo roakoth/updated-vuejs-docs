@@ -5,13 +5,19 @@ description: This is an introduction to Vue.js docs site.
 import { Aside } from '@astrojs/starlight/components';
 import { Code } from '@astrojs/starlight/components';
 import { LinkCard } from '@astrojs/starlight/components';
+import { Icon } from '@astrojs/starlight/components';
+
 
 <Aside title="You are reading the documentation for Vue 3!">
 - Vue 2 support has ended on Dec 31, 2023. Learn more about [Vue 2 EOL](https://v2.vuejs.org/eol/).
 - Upgrading from Vue 2? Check out the [Migration Guide](https://v3-migration.vuejs.org/).
 </Aside>
 
-<img style="width: 96px" src="https://storage.googleapis.com/vue-mastery.appspot.com/flamelink/media/vuemastery-graphical-link-96x56.png" alt="vuejs" width="96px" height="56px"/> Learn Vue with Video tutorials on [VueMastery.com](https://www.vuemastery.com/courses/)
+
+<img style="width: 96px" src="https://storage.googleapis.com/vue-mastery.appspot.com/flamelink/media/vuemastery-graphical-link-96x56.png" alt="vuejs" width="96px" height="56px"/> 
+<LinkCard title= "Learn Vue with Video tutorials on VueMastery.com"
+/>
+
 
 ## What is Vue
 
@@ -122,8 +128,7 @@ button {
 <Code code={sfc} lang="js" />
 
 SFC is a defining feature of Vue and is the recommended way to author Vue components if your use case warrants a build setup. 
-You can learn more about the **[how and why of SFC](https://vuejs.org/guide/scaling-up/sfc.html)** in its dedicated section 
-- but for now, just know that Vue will handle all the build tools setup for you.
+You can learn more about the **[how and why of SFC](https://vuejs.org/guide/scaling-up/sfc.html)** in its dedicated section - but for now, just know that Vue will handle all the build tools setup for you.
 
 ## API styles
 Vue components can be authored in two different API styles: **Options API** and **Composition API**.
@@ -227,8 +232,8 @@ Again, most of the core concepts are shared between the two styles.
 You can always pick up the other style later.
 
 - For production use:
-    - Go with Options API if you are not using build tools, or plan to use Vue primarily in low-complexity scenarios, e.g. progressive enhancement.
-    - Go with Composition API + Single-File Components if you plan to build full applications with Vue.
+  - Go with Options API if you are not using build tools, or plan to use Vue primarily in low-complexity scenarios, e.g. progressive enhancement.
+  - Go with Composition API + Single-File Components if you plan to build full applications with Vue.
 
 You don't have to commit to only one style during the learning phase. 
 The rest of the documentation will provide code samples in both styles where applicable, 
@@ -257,4 +262,4 @@ title="Check out the Examples"
 href="https://vuejs.org/examples/#hello-world"
 description="Explore examples of core features and common UI tasks" />
 
-[Edit this page on GitHub](https://github.com/vuejs/docs/edit/main/src/guide/introduction.md)
+<Icon name="pen" /> [Edit this page on GitHub](https://github.com/vuejs/docs/edit/main/src/guide/introduction.md)

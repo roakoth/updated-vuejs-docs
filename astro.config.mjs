@@ -10,6 +10,10 @@ export default defineConfig({
     base: '/updated-vuejs-docs',
     integrations: [starlight({
         title: 'Vue.js',
+        customCss: [
+            // Relative path to your custom CSS file
+            './src/styles/custom.css',
+          ],
         social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
         sidebar: [
             {

@@ -21,7 +21,7 @@ they do not enjoy the same level of compile-time optimizations as templates.
 The most basic form of data binding is text interpolation using the "Mustache" syntax (double curly braces):
 
 export const template = `
-<span>Message: {{ msg }}</span>
+<span> Message: {{ msg }}</span>
 `;
 
 <Code code={template} lang="html" />
@@ -41,7 +41,7 @@ export const template2 = `
 <Code code={template2} lang="html" />
 
 ```
-Using text interpolation: <span style="color: red">This should be red.</span>
+Using text interpolation: <span style="color: red"> This should be red.</span>
 
 Using v-html directive: This should be red.
 ```
@@ -168,15 +168,15 @@ A simple check is whether it can be used after `return`.
 
 Therefore, the following will NOT work:
 
-export const template8 = `
+```js
 <!-- this is a statement, not an expression: -->
 {{ var a = 1 }}
 
 <!-- flow control won't work either, use ternary expressions -->
 {{ if (ok) { return message } }}
-`;
+```
 
-<Code code={template8} lang="vue" />
+
 
 ### Calling functions
 It is possible to call a component-exposed method inside a binding expression:

@@ -5,6 +5,7 @@ description: An essential page for reactivity fundamentals
 
 import { Code } from '@astrojs/starlight/components';
 import { Aside } from '@astrojs/starlight/components';
+import { LinkCard } from '@astrojs/starlight/components';
 
 <Aside title="API Preference">
 
@@ -75,7 +76,8 @@ When you access `this.someObject` after assigning it, you will get a reactive pr
 Therefore, always ensure that you access the reactive state as a property of `this`**
 
 ## Declaring Methods
-[Watch a free video lesson on Vue School](https://vueschool.io/lessons/methods-in-vue-3?friend=vuejs)
+
+<LinkCard title="Watch a free video lesson on Vue School" href="https://vueschool.io/lessons/methods-in-vue-3?friend=vuejs" />
 
 To add methods to a component instance we use the `methods` option. This should be an object containing the desired methods:
 
